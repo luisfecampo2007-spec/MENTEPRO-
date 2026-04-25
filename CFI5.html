@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mente Pro +</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{margin:0;font-family:'Segoe UI';background:#0f172a;color:white;display:flex;}
+.sidebar{width:240px;background:#020617;height:100vh;padding:20px;position:fixed;}
+.logo{color:#38bdf8;font-size:20px;margin-bottom:30px;}
+.menu a{display:block;padding:10px;margin:5px 0;cursor:pointer;border-radius:8px;}
+.menu a:hover{background:#1e293b;}
+.main{margin-left:260px;padding:30px;width:100%;}
+.card{background:#1e293b;padding:15px;border-radius:10px;margin:10px 0;}
+.hidden{display:none;}
+button{padding:8px;border:none;border-radius:8px;background:#38bdf8;}
+input,select{padding:8px;border-radius:8px;border:none;margin:5px 0;width:100%;}
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+<div class="logo">Mente Pro +</div>
+<div class="menu">
+<a onclick="show('dashboard')">Inicio</a>
+<a onclick="show('coursesView')">Cursos</a>
+<a onclick="show('teacherPanel')">Profesor</a>
+<a onclick="show('login')">Login</a>
+</div>
+</div>
+
+<div class="main">
+
+<div id="login">
+<h2>Login</h2>
+<input id="user" placeholder="Ej: 2025224025.pipecampo">
+<input id="pass" type="password" placeholder="Contraseña">
+
+<select id="role">
+<option value="student">Estudiante</option>
+<option value="teacher">Profesor</option>
+</select>
+
+<input id="teacherCode" placeholder="Código profesor (solo docentes)">
+
+<button onclick="login()">Entrar</button>
+
+<p id="msg"></p>
+</div>
+
+<div id="dashboard" class="hidden">
+<h2>Bienvenido <span id="userName"></span></h2>
+</div>
+
+<div id="coursesView" class="hidden">
+<h2>Cursos</h2>
+<div class="card">
+Matemáticas
+<button onclick="enterCourse()">Entrar</button>
+</div>
+</div>
+
+<div id="courseView" class="hidden">
+<h2>Matemáticas</h2>
+
+<div class="card">
+<h3>Video</h3>
+<video width="100%" controls src="https://www.w3schools.com/html/mov_bbb.mp4"></video>
+</div>
+
+<div class="card">
+<h3>PDF</h3>
+<a href="FORMULAS.pdf" target="_blank">Ver PDF</a>
+</div>
+
+<div class="card">
+<h3>Tarea</h3>
+<input type="file" id="taskFile">
+<button onclick="submitTask()">Subir tarea</button>
+<div id="taskList"></div>
+</div>
+
+<div class="card">
+<h3>Quiz</h3>
+<div id="quiz"></div>
+<button onclick="submitQuiz()">Enviar</button>
+<p id="result"></p>
+</div>
+
+<button onclick="generateCertificate()">Certificado</button>
+
+</div>
+
+<div id="teacherPanel" class="hidden">
+<h2>Panel Profesor</h2>
+<div id="tasks"></div>
+</div>
+
+</div>
+
+<script>
+let currentUser=null;
+let tasks=[];
+
+const TEACHER_CODE="1234";
+
+function show(id){
+document.querySelectorAll('.main > div').forEach(d=>d.classList.add('hidden'));
+document.getElementById(id).classList.remove('hidden');
+if(id==="teacherPanel") loadTeacherPanel();
+}
+
+function login(){
+if(role.value==="teacher" && teacherCode.value!==TEACHER_CODE){
+return msg.innerText="Código incorrecto";
+}
+
+currentUser={name:user.value,role:role.value};
+
+userName.innerText=currentUser.name;
+
+msg.innerText="";
+
+show('dashboard');
+loadQuiz();
+}
+
+function enterCourse(){
+show('courseView');
+loadQuiz();
+}
+
+/* TAREAS */
+function submitTask(){
+let file=taskFile.files[0];
+if(!file) return alert("Sube archivo");
+
+tasks.push({user:currentUser.name,name:file.name});
+renderTasks();
+alert("Tarea enviada");
+}
+
+function renderTasks(){
+taskList.innerHTML="";
+tasks.forEach(t=>{
+taskList.innerHTML+=`<div class="card">${t.name}</div>`;
+});
+}
+
+/* PANEL PROFESOR */
+function loadTeacherPanel(){
+tasksDiv=document.getElementById("tasks");
+tasksDiv.innerHTML="";
+
+tasks.forEach(t=>{
+tasksDiv.innerHTML+=`
+<div class="card">
+👤 ${t.user}<br>
+📄 ${t.name}
+</div>`;
+});
+}
+
+/* QUIZ 5 PREGUNTAS */
+function loadQuiz(){
+quiz.innerHTML=`
+1. ¿Qué estudia?<br>
+<input type="radio" name="q1" value="1"> Valor del dinero<br>
+<input type="radio" name="q1" value="0"> Tiempo<br><br>
+
+2. Fórmula simple:<br>
+<input type="radio" name="q2" value="1"> I=C*i*t<br>
+<input type="radio" name="q2" value="0"> VF=C+i<br><br>
+
+3. Interés compuesto:<br>
+<input type="radio" name="q3" value="1"> VF=C(1+i)^t<br>
+<input type="radio" name="q3" value="0"> C+i<br><br>
+
+4. Capital es:<br>
+<input type="radio" name="q4" value="1"> Dinero inicial<br>
+<input type="radio" name="q4" value="0"> Tiempo<br><br>
+
+5. Tasa es:<br>
+<input type="radio" name="q5" value="1"> Porcentaje<br>
+<input type="radio" name="q5" value="0"> Capital<br>
+`;
+}
+
+function submitQuiz(){
+let score=0;
+for(let i=1;i<=5;i++){
+let q=document.querySelector(`input[name=q${i}]:checked`);
+if(q) score+=parseInt(q.value);
+}
+result.innerText="Nota: "+score+"/5";
+}
+
+function generateCertificate(){
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF();
+doc.text("Certificado",20,20);
+doc.text(currentUser.name,20,40);
+doc.save("certificado.pdf");
+}
+</script>
+
+</body>
+</html>
